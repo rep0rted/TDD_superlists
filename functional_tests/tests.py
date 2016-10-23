@@ -38,9 +38,12 @@ class NewVisitorTest(LiveServerTestCase):
     # hobby is tying fly-fishing lures)
     inputbox.send_keys('Buy peacock feathers')
 
-    # When he hits enter, the page updates, and now the page lists
-    # "1: Buy pee cock feathers" as an item in a to-do list table
+    # When he hits enter, he is taken to a new URL, and now the
+    # page lists "1: Buy pee cock feathers" as an item in a
+    # to-do list table
     inputbox.send_keys(Keys.ENTER)
+    forest_list_url = self.browser.current_url
+    self.assertRegex(forest_list_url, '/lists/.+')
     self.check_for_row_in_list_table('1: Buy peacock feathers')
     
     # There is still a text box inviting him to add another item. He
@@ -54,11 +57,36 @@ class NewVisitorTest(LiveServerTestCase):
     self.check_for_row_in_list_table('1: Buy peacock feathers')
     self.check_for_row_in_list_table('2: Use peacock feathers to make a fly')
 
-    # Forest wonders whether the site will remember his list.
-    # Then he sees that the site has generated a unique URL for
-    # him -- there is some explanatory text to that effect
+    # Now a new user, Alexis, comes along to the site.
+
+    ## We use a new browser session to make sure that no
+    ## information of Forest's is coming through from cookies &c
+    
+    self.browser.quit()
+    self.browser = webdriver.Firefox()
+
+    # Alexis visits the home page. There is no sign of Alexis' list
+    self.browser.get(self.live_server_url)
+    page_text = self.browser.find_element_by_tag_name('body').text
+    self.assertNotIn('Buy peacock feathers', page_text)
+    self.assertNotIn('make a fly', page_text)
+
+    # Alexis starts a new list by entering a new item. She is less
+    # interesting than Forest...
+    inputbox = self.browser.find_element_by_id('id_new_item')
+    inputbox.send_keys('Buy milk')
+    inputbox.send_keys(Keys.ENTER)
+
+    # Alexis gets her own unique URL
+    alexis_list_url = self.browser.current_url
+    self.assertRegex(alexis_list_url, '/lists/.+')
+    self.assertNotEqual(francis_list_url, edith_list_url)
+
+    # Again, there is no trace of Forest's list
+    page_text = self.browser.find_element_by_tag_name('body').text
+    self.assertNotIn('Buy peacock feathers', page_text)
+    self.assertIn('Buy milk', page_text)
+
+    # Satisfied, they both go back to sleep
+
     self.fail('Finish the test!')
-
-    # He visits that URL - his to-do list is still there
-
-    # Satisfied, he goes back to sleep
