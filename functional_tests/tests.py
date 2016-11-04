@@ -54,14 +54,13 @@ class NewVisitorTest(LiveServerTestCase):
 
     # The page updates again, and now shows both items on his
     # list
-    self.check_for_row_in_list_table('1: Buy peacock feathers')
     self.check_for_row_in_list_table('2: Use peacock feathers to make a fly')
+    self.check_for_row_in_list_table('1: Buy peacock feathers')
 
     # Now a new user, Alexis, comes along to the site.
 
     ## We use a new browser session to make sure that no
     ## information of Forest's is coming through from cookies &c
-    
     self.browser.quit()
     self.browser = webdriver.Firefox()
 
