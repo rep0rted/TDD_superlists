@@ -8,20 +8,26 @@ from lists.models import Item
 
 class HomePageTest(TestCase):
 
-  def test_root_url_resolves_to_home_page_view(self):
-    found = resolve('/')
-    self.assertEqual(found.func, home_page)
+  def test_uses_home_template(self):
+    response = self.client.get('/')
+    self.assertTemplateUsed(response, 'home.html')
 
-  def test_home_page_returns_correct_html(self):
-    request = HttpRequest()
-    response = home_page(request)
-    expected_html = render_to_string('home.html')
-    self.assertEqual(response.content.decode(), expected_html)
-  
-  def test_home_page_only_saves_items_when_necessary(self):
-    request = HttpRequest()
-    home_page(request)
+  def test_only_saves_items_when_necessary(self):
+    self.client.get('/')
     self.assertEqual(Item.objects.count(), 0)
+
+class NewListTest(TestCase):
+
+  def test_saving_a_POST_request(self):
+    self.client.post('/lists/new', data={'item_text': 'A new list item'})
+
+    self.assertEqual(Item.objects.count(), 1)
+    new_item = Item.objects.first()
+    self.assertEqual(new_item.text, 'A new list item')
+
+  def test_redirects_after_POST(self):
+    response = self.client.post('/lists/new', data={'item_text': 'A new list item'})
+    self.assertRedirects(response, '/lists/the-only-list-in-the-world/')
 
 class ItemModelTest(TestCase):
 
@@ -56,24 +62,3 @@ class ListViewTest(TestCase):
 
     self.assertContains(response, 'itemey 1')
     self.assertContains(response, 'itemey 2')
-
-class NewListTest(TestCase):
-
-  def test_saving_a_POST_request(self):
-    self.client.post(
-      'lists/new',
-      data={'item_text': 'A new list item'}
-    )    
-    self.assertEqual(Item.objects.count(), 1)
-    new_item = Item.objects.first()
-    self.assertEqual(new_item.text, 'A new list item')
-
-  def test_redirects_after_POST(self):
-    response = self.client.post(
-      'lists/new',
-      data={'item_text': 'A new list item'}
-    )
-    self.assertEqual(response.status_code, 302)
-    self.assertEqual(response['location'], '/lists/the-only-list-in-the-world/')
-
-

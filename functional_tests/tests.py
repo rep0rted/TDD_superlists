@@ -38,12 +38,10 @@ class NewVisitorTest(LiveServerTestCase):
     # hobby is tying fly-fishing lures)
     inputbox.send_keys('Buy peacock feathers')
 
-    # When he hits enter, he is taken to a new URL, and now the
+    # When he hits enter, the page updates, and now the
     # page lists "1: Buy pee cock feathers" as an item in a
     # to-do list table
     inputbox.send_keys(Keys.ENTER)
-    forest_list_url = self.browser.current_url
-    self.assertRegex(forest_list_url, '/lists/.+')
     self.check_for_row_in_list_table('1: Buy peacock feathers')
     
     # There is still a text box inviting him to add another item. He
@@ -57,14 +55,28 @@ class NewVisitorTest(LiveServerTestCase):
     self.check_for_row_in_list_table('2: Use peacock feathers to make a fly')
     self.check_for_row_in_list_table('1: Buy peacock feathers')
 
+    # Satisfied, he goes back to sleep
+
+  def test_multiple_users_can_start_lists_at_different_urls(self):
+    # Forest start a new to-do list
+    self.browser.get(self.live_server_url)
+    inputbox = self.browser.find_element_by_id('id_new_item')
+    inputbox.send_keys('Buy peacock feathers')
+    inputbox.send_keys(Keys.ENTER)
+    self.check_for_row_in_list_table('1: Buy peacock feathers')
+
+    # He notices that his list has a unique URL
+    forest_list_url = self.browser.current_url
+    self.assertRegex(forest_list_url, '/lists/.+')
+
     # Now a new user, Alexis, comes along to the site.
 
     ## We use a new browser session to make sure that no
-    ## information of Forest's is coming through from cookies &c
+    ## information of Forest's is coming through from cookies etc
     self.browser.quit()
     self.browser = webdriver.Firefox()
 
-    # Alexis visits the home page. There is no sign of Alexis' list
+    # Alexis visits the home page. There is no sign of Forest's list
     self.browser.get(self.live_server_url)
     page_text = self.browser.find_element_by_tag_name('body').text
     self.assertNotIn('Buy peacock feathers', page_text)
@@ -75,6 +87,7 @@ class NewVisitorTest(LiveServerTestCase):
     inputbox = self.browser.find_element_by_id('id_new_item')
     inputbox.send_keys('Buy milk')
     inputbox.send_keys(Keys.ENTER)
+    self.check_for_row_in_list_table('1: Buy milk')
 
     # Alexis gets her own unique URL
     alexis_list_url = self.browser.current_url
